@@ -19,7 +19,7 @@ LABELS: dict[str, str] = {
     "ebit": "EBIT",
     "depreciation_amortization": "D&A",
     "ebitda": "EBITDA",
-    "interest_expense": "Interest Expense",
+    "interest_expense": "Interest & Other Non-Op. (net)",
     "pretax_income": "Pre-Tax Income",
     "income_tax": "Income Tax",
     "net_income": "Net Income",

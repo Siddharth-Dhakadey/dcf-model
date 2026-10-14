@@ -19,13 +19,18 @@ import pandas as pd
 SAMPLE_COMPANY_NAME = "Maple Coffee Co. (hypothetical)"
 UNITS = "$ millions, shares in millions"
 
+# Items that can legitimately be negative in real companies:
+#   interest_expense - for real companies this is NET non-operating expense; interest income can exceed it
+#   income_tax       - a tax benefit (refund) is negative
+CAN_BE_NEGATIVE = {"interest_expense", "income_tax"}
+
 # Every line item the model needs from the three financial statements.
 REQUIRED_ITEMS: list[str] = [
     # Income statement
     "revenue",
     "cogs",
     "operating_expenses",        # includes D&A, as on most real income statements
-    "interest_expense",
+    "interest_expense",          # interest + other non-operating expense, net
     "income_tax",
     # Cash flow statement
     "depreciation_amortization",
@@ -90,10 +95,11 @@ def validate_historicals(df: pd.DataFrame) -> None:
     if has_blanks.any():
         raise ValueError(f"Missing values in: {required.index[has_blanks].tolist()}")
 
-    has_negatives = (required < 0).any(axis=1)
+    must_be_positive = required.drop(index=list(CAN_BE_NEGATIVE))
+    has_negatives = (must_be_positive < 0).any(axis=1)
     if has_negatives.any():
         raise ValueError(
-            f"Negative values in: {required.index[has_negatives].tolist()}. "
+            f"Negative values in: {must_be_positive.index[has_negatives].tolist()}. "
             "Enter costs and outflows as positive numbers."
         )
 

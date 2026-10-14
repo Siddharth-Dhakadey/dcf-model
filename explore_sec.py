@@ -1,41 +1,45 @@
 """
-explore_sec.py — Step 15: download a company's filed financial data from the SEC and look at it.
+explore_sec.py — Step 16: turn a company's SEC data into the model's historical table.
 
 Change TICKER to try another US company that files 10-Ks with the SEC.
 Run with:  python explore_sec.py
 """
 
-from src.sec import annual_values, download_company_facts, summarize_company_facts
+import pandas as pd
+
+from src.data import validate_historicals
+from src.display import print_table, print_warnings
+from src.historicals import build_historical_statements, calculate_ratios
+from src.sec import download_company_facts
+from src.sec_financials import build_sec_historicals
 
 TICKER = "AAPL"
-PEEK_CONCEPT = "RevenueFromContractWithCustomerExcludingAssessedTax"   # Apple's revenue tag
-YEARS_TO_SHOW = 5
+YEARS = 5
 
 
 def main() -> None:
     download = download_company_facts(TICKER)
-    summary = summarize_company_facts(download.facts)
+    sec = build_sec_historicals(download.facts, years=YEARS)
 
-    print("=" * 60)
-    print(f"  SEC data for {download.ticker}: {download.company_name}")
-    print("=" * 60)
-    print(f"CIK (SEC company ID):   {download.cik}")
-    print(f"Data source:            {download.source}")
-    print(f"Saved at:               {download.cache_file}")
-    print(f"Entity name in filing:  {summary['entity_name']}")
-    for taxonomy, count in summary["concepts_per_taxonomy"].items():
-        print(f"Concepts ({taxonomy + '):':<10}   {count}")
-    print(f"10-K filings included:  {summary['number_of_10k_filings']}")
-    print(f"Latest 10-K filed on:   {summary['latest_10k_filed']}")
+    validate_historicals(sec.raw)                        # the same checks Maple Coffee gets
+    financials = build_historical_statements(sec.raw)    # the same code Maple Coffee uses
+    ratios = calculate_ratios(financials)
 
-    table = annual_values(download.facts, PEEK_CONCEPT)
-    print(f"\nPeek: '{PEEK_CONCEPT}' as reported in 10-Ks ($ millions, raw)")
-    print("-" * 60)
-    if table.empty:
-        print(f"{TICKER} does not use this tag. (Step 16 will handle different tags.)")
-        return
-    recent_periods = sorted(table["period_end"].unique())[-YEARS_TO_SHOW:]
-    print(table[table["period_end"].isin(recent_periods)].to_string(index=False))
+    print("=" * 70)
+    print(f"  {download.company_name} ({download.ticker}) - historical data from SEC 10-K filings")
+    print("=" * 70)
+    print("Fiscal years end on: " + ", ".join(f"FY{y} = {d}" for y, d in sec.period_ends.items()))
+
+    print_table(financials, "Historical Financials ($ millions, shares in millions)", style="money")
+    print_table(ratios, "Historical Ratios", style="percent")
+    print_table(sec.memo, "Memo: items that need an analyst decision ($ millions)", style="money")
+
+    print("\nProvenance: where each number came from")
+    print("---------------------------------------")
+    with pd.option_context("display.max_colwidth", 70, "display.width", 200):
+        print(sec.provenance.to_string())
+
+    print_warnings("Data checks", sec.warnings)
 
 
 if __name__ == "__main__":
