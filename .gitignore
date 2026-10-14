@@ -1,19 +1,23 @@
-# Virtual environment (rebuilt from requirements.txt, never shared)
+# Python virtual environment
 .venv/
 
-# Python cache files (rebuilt automatically every time Python runs)
+# Python cache files
 __pycache__/
 *.pyc
 .pytest_cache/
 
-# macOS system files
+# macOS
 .DS_Store
 
-# Personal settings (contains your email address) - never upload
+# Private settings (your SEC User-Agent): never commit
 local_settings.py
 
-# Downloaded and processed data (can always be downloaded again)
+# Downloaded and processed data (re-created by the code); keep the empty folders
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+
+# Charts (re-created every time you run main.py)
+outputs/
+outputs/

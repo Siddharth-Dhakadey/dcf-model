@@ -18,6 +18,7 @@ from src.display import (
     print_warnings,
 )
 from src.model import CompanyInputs, ModelResults, run_model
+from src.visualization import save_all_charts
 
 TICKER = "AAPL"
 
@@ -76,6 +77,10 @@ def main() -> None:
     inputs = load_company(TICKER)
     results = run_model(inputs)
     print_report(inputs, results)
+
+    print("\nCharts saved:")
+    for path in save_all_charts(inputs, results):
+        print(f"  {path.relative_to(path.parent.parent)}")
 
 
 if __name__ == "__main__":
