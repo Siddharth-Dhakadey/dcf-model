@@ -8,3 +8,12 @@ __pycache__/
 
 # macOS system files
 .DS_Store
+
+# Personal settings (contains your email address) - never upload
+local_settings.py
+
+# Downloaded and processed data (can always be downloaded again)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
