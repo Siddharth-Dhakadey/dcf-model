@@ -4,5 +4,6 @@ numpy>=1.26
 matplotlib>=3.8
 pytest>=8.0
 
-# Downloading data from the internet (SEC EDGAR)
-requests>=2.31
+# Downloading data from the internet
+requests>=2.31      # SEC EDGAR (official filings)
+yfinance>=1.0       # Yahoo Finance market data (unofficial, personal/educational use)

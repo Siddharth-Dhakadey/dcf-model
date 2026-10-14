@@ -240,3 +240,48 @@ def check_sec_historicals(values: dict[str, pd.Series], provenance: pd.DataFrame
         warnings.append(f"'{item}' was not found and set to 0. Confirm in the 10-K balance sheet.")
 
     return warnings
+
+
+def latest_cover_shares(facts: dict) -> tuple[float, str]:
+    """
+    The most recent share count from the cover page of a 10-K or 10-Q
+    (dei:EntityCommonStockSharesOutstanding). Returns (shares in millions, as-of date).
+    This is more up to date than the year's weighted-average diluted share count.
+    """
+    dei = facts.get("facts", {}).get("dei", {})
+    entries = dei.get("EntityCommonStockSharesOutstanding", {}).get("units", {}).get("shares", [])
+    if not entries:
+        raise ValueError("No cover-page share count (EntityCommonStockSharesOutstanding) in the SEC data.")
+    latest = max(entries, key=lambda e: (e["end"], e["filed"]))
+    return latest["val"] / 1_000_000, latest["end"]
+
+
+def latest_balance_sheet(facts: dict, groups: dict[str, list[str]]) -> tuple[dict[str, float], str, str]:
+    """
+    Balance-sheet values on the MOST RECENT date where EVERY requested tag was reported,
+    looking at quarterly reports (10-Q) as well as annual ones (10-K). Using one common
+    date keeps cash, debt and securities consistent with each other.
+
+    groups example: {"cash": ["CashAndCashEquivalentsAtCarryingValue", "MarketableSecuritiesCurrent"],
+                     "total_debt": ["LongTermDebtNoncurrent", "LongTermDebtCurrent"]}
+    Returns ({group name: value in $ millions}, balance sheet date, form).
+    """
+    all_tags = [tag for tags in groups.values() for tag in tags]
+    by_tag: dict[str, dict[str, tuple[float, str]]] = {}
+    for tag in all_tags:
+        entries = facts.get("facts", {}).get("us-gaap", {}).get(tag, {}).get("units", {}).get("USD", [])
+        values: dict[str, tuple[float, str]] = {}
+        for e in sorted(entries, key=lambda e: e["filed"]):          # later filings overwrite earlier ones
+            if "start" not in e and e.get("form") in ("10-K", "10-Q"):
+                values[e["end"]] = (e["val"], e["form"])
+        by_tag[tag] = values
+
+    common_dates = set.intersection(*(set(v) for v in by_tag.values()))
+    if not common_dates:
+        raise ValueError(f"No single balance sheet date reports all of: {all_tags}")
+    latest = max(common_dates)
+    totals = {
+        name: sum(by_tag[tag][latest][0] for tag in tags) / 1_000_000
+        for name, tags in groups.items()
+    }
+    return totals, latest, by_tag[all_tags[0]][latest][1]

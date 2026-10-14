@@ -161,8 +161,8 @@ def print_terminal_value(t: TerminalAssumptions, wacc: float, final_ufcf: float,
     print_summary("Terminal Value ($ millions)", rows)
 
 
-def print_valuation(result: ValuationResult, share_price: float, price_date: str,
-                    balance_sheet_year: int, dcf_ev_to_ebitda: float, market_ev_to_ebitda: float) -> None:
+def print_valuation(result: ValuationResult, share_price: float, price_date: str, bridge_date: str,
+                    ebitda_year: int, dcf_ev_to_ebitda: float, market_ev_to_ebitda: float) -> None:
     """Print the valuation summary: EV -> equity bridge -> implied share price -> sanity check."""
     rows = [
         ("Enterprise value", ""),
@@ -170,18 +170,18 @@ def print_valuation(result: ValuationResult, share_price: float, price_date: str
         ("  + PV of terminal value", f"{result.pv_terminal_value:,.1f}"),
         ("  = Enterprise value", f"{result.enterprise_value:,.1f}"),
         ("  Terminal value as % of EV", f"{result.tv_share_of_ev:.1%}"),
-        (f"Equity bridge (balances at FY{balance_sheet_year})", ""),
+        (f"Equity bridge (balance sheet: {bridge_date})", ""),
         ("  + Cash", f"{result.cash:,.1f}"),
         ("  - Total debt", f"{result.total_debt:,.1f}"),
         ("  - Preferred stock", f"{result.preferred_stock:,.1f}"),
         ("  - Minority interest", f"{result.minority_interest:,.1f}"),
         ("  = Equity value", f"{result.equity_value:,.1f}"),
         ("Per share", ""),
-        ("  / Diluted shares (millions)", f"{result.diluted_shares:,.1f}"),
+        ("  / Shares (millions)", f"{result.diluted_shares:,.1f}"),
         ("  = Implied share price", f"${result.implied_share_price:,.2f}"),
         (f"  Current share price ({price_date})", f"${share_price:,.2f}"),
         ("  Upside / (downside)", f"{upside_downside(result.implied_share_price, share_price):.1%}"),
-        (f"Sanity check: EV / FY{balance_sheet_year} EBITDA", ""),
+        (f"Sanity check: EV / FY{ebitda_year} EBITDA", ""),
         ("  Implied by this DCF", f"{dcf_ev_to_ebitda:.1f}x"),
         ("  Implied by the market price", f"{market_ev_to_ebitda:.1f}x"),
     ]
