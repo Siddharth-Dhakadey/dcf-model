@@ -1,0 +1,10 @@
+# Virtual environment (rebuilt from requirements.txt, never shared)
+.venv/
+
+# Python cache files (rebuilt automatically every time Python runs)
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# macOS system files
+.DS_Store
